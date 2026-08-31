@@ -6,7 +6,25 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+
+    <PackageId>FFME.Avalonia</PackageId>
+    <Version>0.1.0-beta.1</Version>
+    <Authors>LIJIAOLONG96 and FFME contributors</Authors>
+    <Title>FFME for Avalonia</Title>
+    <Description>A cross-platform Avalonia MediaElement powered by FFmpeg, with software video rendering, subtitles, and PortAudio output.</Description>
+    <PackageTags>avalonia ffmpeg mediaelement audio video playback subtitles</PackageTags>
+    <PackageProjectUrl>https://github.com/LIJIAOLONG96/ffmediaelement.Avalonia</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/LIJIAOLONG96/ffmediaelement.Avalonia.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE" Pack="true" PackagePath="" />
+    <None Include="..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.8" />
