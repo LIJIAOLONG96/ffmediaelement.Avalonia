@@ -1,0 +1,46 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "Unosquare.FFME.Windows/**/*.cs" ],
+          "exclude": [ "**/bin/**", "**/obj/**" ]
+        }
+      ],
+      "dest": "obj/api"
+    }
+  ],
+  "build": {
+    "xrefService": "https://xref.docs.microsoft.com/query?uid={uid}",
+    "template": [
+      "best-practices/templates/default"
+    ],
+    "content": [
+      {
+        "files": [
+          "**/*.yml"
+        ],
+        "cwd": "obj/api",
+        "dest": "api"
+      },
+      {
+        "files": [
+          "*.md",
+          "toc.yml"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [ "best-practices/resources/**", "ffme.png"]
+      }
+    ],
+    "globalMetadata": {
+      "_appTitle": "FFME: WPF MediaElement replacement based on FFmpeg",
+      "_enableSearch": true,
+      "_docLogo": "ffme.png",
+      "_appLogoPath": "best-practices/resources/images/logo.png"
+    },
+    "dest": "_site"
+  }
+}
