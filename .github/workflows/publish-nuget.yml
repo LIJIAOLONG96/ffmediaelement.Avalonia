@@ -85,7 +85,7 @@ jobs:
       - name: Upload Avalonia package
         uses: actions/upload-artifact@v4
         with:
-          name: FFME.Avalonia-${{ github.sha }}
+          name: FFMediaElement.Avalonia-${{ github.sha }}
           path: Publish/*
           if-no-files-found: error
 
@@ -100,7 +100,7 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         shell: pwsh
         run: |
-          $packages = @(Get-ChildItem 'Publish/FFME.Avalonia.*.nupkg' -File)
+          $packages = @(Get-ChildItem 'Publish/FFMediaElement.Avalonia.*.nupkg' -File)
           if ($packages.Count -ne 1) {
             throw "Expected exactly one Avalonia package, but found $($packages.Count)."
           }

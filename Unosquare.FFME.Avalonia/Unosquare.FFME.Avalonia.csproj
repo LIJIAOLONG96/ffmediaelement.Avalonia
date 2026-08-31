@@ -7,7 +7,7 @@
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
 
-    <PackageId>FFME.Avalonia</PackageId>
+    <PackageId>FFMediaElement.Avalonia</PackageId>
     <Version>0.1.0-beta.1</Version>
     <Authors>LIJIAOLONG96 and FFME contributors</Authors>
     <Title>FFME for Avalonia</Title>
