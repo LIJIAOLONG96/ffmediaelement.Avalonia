@@ -1,227 +1,223 @@
-# FFME: *The Advanced WPF MediaElement Alternative*
+# FFMediaElement.Avalonia
 
-[![Join the chat at https://gitter.im/ffmediaelement/Lobby](https://badges.gitter.im/ffmediaelement/Lobby.svg)](https://gitter.im/ffmediaelement/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Analytics](https://ga-beacon.appspot.com/UA-8535255-2/unosquare/ffmediaelement/)](https://github.com/igrigorik/ga-beacon)
-[![NuGet version](https://badge.fury.io/nu/FFME.Windows.svg)](https://badge.fury.io/nu/FFME.Windows)
-[![NuGet](https://img.shields.io/nuget/dt/FFME.Windows.svg)](https://www.nuget.org/packages/FFME.Windows)
-[![Build status](https://ci.appveyor.com/api/projects/status/ppqeayanucj1hadj?svg=true)](https://ci.appveyor.com/project/geoperez/ffmediaelement)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c439ad57c68e43f796401467bca06e9e)](https://www.codacy.com/app/UnosquareLabs/ffmediaelement?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=unosquare/ffmediaelement&amp;utm_campaign=Badge_Grade)
+[![NuGet](https://img.shields.io/nuget/v/FFMediaElement.Avalonia.svg)](https://www.nuget.org/packages/FFMediaElement.Avalonia)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/FFMediaElement.Avalonia.svg)](https://www.nuget.org/packages/FFMediaElement.Avalonia)
+[![Build](https://github.com/LIJIAOLONG96/ffmediaelement.Avalonia/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/LIJIAOLONG96/ffmediaelement.Avalonia/actions/workflows/publish-nuget.yml)
 
-:star: *Please star this project if you like it and show your appreciation via* **[PayPal.Me](https://www.paypal.me/mariodivece/50usd)**
+`FFMediaElement.Avalonia` is an Avalonia port of
+[Unosquare FFME](https://github.com/unosquare/ffmediaelement), adapted from its
+WPF implementation for cross-platform Avalonia desktop applications.
 
-![ffmeplay](https://github.com/unosquare/ffmediaelement/raw/master/Support/ffmeplay.png)
+The project retains the FFME media container, FFmpeg decoding, command,
+buffering, timing, seeking, and worker pipeline. The WPF-specific control and
+renderers are replaced with an Avalonia `MediaElement`, Avalonia software video
+rendering, timed-text subtitle rendering, and PortAudio output.
 
-## Status Updates
-- If you would like to support this project, you can show your appreciation via [PayPal.Me](https://www.paypal.me/mariodivece/50usd)
-- Current Status: (2024-06-26) - BETA 1 Release 7.0.361.1 is now available, (see the <a href="https://github.com/unosquare/ffmediaelement/releases">Releases</a>)
-- NuGet Package available here: https://www.nuget.org/packages/FFME.Windows/
-- FFmpeg Version: <a href="https://ffmpeg.org/download.html">7.0</a> -- Make sure you download one built as a SHARED library and for your right architecture (typically x64)
-- BREAKING CHANGE: Starting realease 4.1.320 the `Source` dependency property has been downgraded to a notification property. Please use the asynchronous `Open` and `Close` methods instead.
-- I have been learning a ton while writing this project. You can find my latest video and rendering experiments <a href="https://github.com/mariodivece/ffplaysharp">here (if you are curious)</a>
+Refer to the upstream [FFME repository](https://github.com/unosquare/ffmediaelement)
+for the media engine architecture, supported formats, stream options, custom
+input streams, media events, and other common FFME concepts. This README focuses
+on installing and using the Avalonia port and on behavior that differs from the
+upstream WPF package.
 
-*Please note the current NuGet realease might require a different version of the FFmpeg binaries than the ones of the current state of the source code.*
-
-## Avalonia Desktop Preview
-
-The solution now includes an experimental native Avalonia implementation targeting .NET 8:
-
-- `Unosquare.FFME.Avalonia` reuses the existing FFmpeg container, decoder, command, timing, and worker pipeline.
-- `Unosquare.FFME.Avalonia.Sample` is a cross-platform desktop player for Windows, Linux, and macOS.
-- Software video rendering, playback controls, seeking, status events, and timed text subtitles are available.
-- Cross-platform audio output uses PortAudio with 48 kHz, 16-bit stereo PCM, including volume, balance, mute, and playback-speed handling.
-
-Run the sample with:
+## Install
 
 ```bash
-dotnet run --project Unosquare.FFME.Avalonia.Sample/Unosquare.FFME.Avalonia.Sample.csproj
+dotnet add package FFMediaElement.Avalonia
 ```
 
-Download the verified FFmpeg 7.1.5 LGPL shared builds with:
+```xml
+<PackageReference Include="FFMediaElement.Avalonia" Version="0.1.1" />
+```
+
+The package targets .NET 8 and uses Avalonia 11.
+
+## Differences from FFME.Windows
+
+| Area | Upstream FFME.Windows | FFMediaElement.Avalonia |
+| --- | --- | --- |
+| NuGet package | `FFME.Windows` | `FFMediaElement.Avalonia` |
+| UI framework | WPF | Avalonia 11 |
+| Target framework | Windows targets | .NET 8 desktop |
+| Assembly | `ffme.win` | `ffme.avalonia` |
+| CLR namespace | `Unosquare.FFME` | `Unosquare.FFME` |
+| XAML namespace | `assembly=ffme.win` | `assembly=ffme.avalonia` |
+| Bindable properties | WPF dependency properties | Avalonia styled properties |
+| Video output | WPF/interop renderers | Avalonia `WriteableBitmap` software renderer |
+| Audio output | Windows audio renderer, optional SoundTouch | PortAudio, 48 kHz 16-bit stereo PCM |
+| Platforms | Windows | Windows, Linux, and macOS desktop |
+| Player controls | Supplied by the application | Supplied by the application |
+
+The CLR namespace intentionally remains `Unosquare.FFME` to preserve the shared
+FFME API. The NuGet package name and assembly name are different, so Avalonia
+XAML must reference `ffme.avalonia`.
+
+The Avalonia port currently does not provide every WPF renderer-specific API.
+In particular, WPF rendering callbacks, DirectSound integration, SoundTouch,
+closed-caption presentation, screenshot helpers, and interop video rendering
+are not part of the Avalonia package.
+
+Changing `SpeedRatio` currently changes audio pitch because the PortAudio
+renderer adjusts playback by sampling frames rather than using SoundTouch.
+
+## FFmpeg Native Libraries
+
+Like upstream FFME, this package uses `FFmpeg.AutoGen` and requires FFmpeg shared
+libraries. The native FFmpeg binaries are not included in the NuGet package.
+
+Install a compatible FFmpeg 7 shared build for the current operating system and
+architecture, then set `Library.FFmpegDirectory` before opening media. A
+standalone `ffmpeg` executable is not sufficient.
+
+For example, a Windows FFmpeg 7.1 directory contains:
+
+```text
+avcodec-61.dll
+avformat-61.dll
+avutil-59.dll
+swresample-5.dll
+swscale-8.dll
+```
+
+This repository includes a helper for verified Windows and Linux builds:
 
 ```powershell
 .\Support\download-ffmpeg.ps1
 ```
 
-The script installs `win-x64`, `win-arm64`, `linux-x64`, and `linux-arm64` under `external/ffmpegs`. The sample automatically discovers the directory matching the current runtime identifier; the path field can still override it. PortAudio native assets are restored through NuGet for Windows, Linux, and macOS. macOS FFmpeg assets are not bundled yet and require separate `osx-x64` or `osx-arm64` shared builds containing the FFmpeg `.dylib` files. A standalone static `ffmpeg` executable cannot be used by `FFmpeg.AutoGen`.
+The script installs `win-x64`, `win-arm64`, `linux-x64`, and `linux-arm64` under
+`external/ffmpegs`. macOS requires a separately obtained compatible shared build
+containing the FFmpeg `.dylib` files.
 
-## Quick Usage Guide for WPF Apps
+PortAudio native assets are restored through the NuGet dependencies for Windows,
+Linux, and macOS.
 
-### Get Started
+## Avalonia Usage
 
-1. Open Visual Studio and create a new WPF Application.
-   
-   **Target Framework must be set to .net 5.0 or above**
-   
-2. Install the NuGet Package from your Package Manager Console: 
-   ```bash
-   PM> Install-Package FFME.Windows
-3. Acquire the FFmpeg shared binaries (either 64 or 32 bit, depending on your app's target architecture)
-   
-   *by either*
-   
-* Building your own
-  
-    I recommend the [Media Autobuild Suite](https://github.com/jb-alvarado/media-autobuild_suite)  _please don't ask for help on it here._
+Use the Avalonia assembly in XAML:
 
-  *or*
-* Downloading a compatible build 
+```xml
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ffme="clr-namespace:Unosquare.FFME;assembly=ffme.avalonia">
+    <Grid RowDefinitions="*,Auto">
+        <ffme:MediaElement
+            x:Name="Media"
+            Stretch="Uniform" />
 
-  For a x64 build 
-  * the **dlls** are located here, [7.0 x64](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z),
-   combine the contents of the `bin` folder of both downloaded folders into a separate folder e.g `c:\ffmpeg\x64`.
- 
-   *The resulting contents of the folder e.g `c:\ffmpeg\x64` should be so*
-     - avcodec-59.dll
-     - avdevice-59.dll
-     - avfilter-8.dll
-     - avformat-59.dll
-     - avutil-58.dll
-     - ffmpeg.exe
-     - ffplay.exe
-     - ffprobe.exe
-     - swresample-4.dll
-     - swscale-6.dll
-     
-4. Within your application's startup code (Main method)
-   
-   set the _Unosquare.FFME.Library.FFmpegDirectory_ variable to the path of the folder where the DLLs and EXEs are located, e.g.
-
-  ```Unosquare.FFME.Library.FFmpegDirectory = @"c:\ffmpeg";```
-  
-  And use the FFME MediaElement control as you would any other WPF control.
-
-### Example 
-in your main window (e.g MainWindow.xaml)
-
-* Add the namespace:
-```xmlns:ffme="clr-namespace:Unosquare.FFME;assembly=ffme.win"```
-
-* Add the FFME control:
-```<ffme:MediaElement x:Name="Media" Background="Gray" LoadedBehavior="Play" UnloadedBehavior="Manual" />```
-
-* Play files or streams, by calling the asynchronous method, Open:
-```await Media.Open(new Uri(@"c:\your-file-here"));```
-
-* Close the media, by calling:
-```await Media.Close();```
-
-
-#### Additional Usage Notes
-- Remember: The `Unosquare.FFME.Windows.Sample` provides usage examples for plenty of features. Use it as your main reference.
-- The generated API documentation is available [here](http://unosquare.github.io/ffmediaelement/api/Unosquare.FFME.html)
-
-## Features Overview
-FFME is an advanced and close drop-in replacement for <a href="https://msdn.microsoft.com/en-us/library/system.windows.controls.mediaelement(v=vs.110).aspx">Microsoft's WPF MediaElement Control</a>. While the standard MediaElement uses DirectX (DirectShow) for media playback, FFME uses <a href="http://ffmpeg.org/">FFmpeg</a> to read and decode audio and video. This means that for those of you who want to support stuff like HLS playback, or just don't want to go through the hassle of installing codecs on client machines, using FFME *might* just be the answer. 
-
-FFME provides multiple improvements over the standard MediaElement such as:
-- Fast media seeking and frame-by-frame seeking.
-- Properties such as Position, Balance, SpeedRatio, IsMuted, and Volume are all Dependency Properties.
-- Additional and extended media events. Extracting (and modifying) video, audio and subtitle frames is very easy.
-- Easily apply FFmpeg video and audio filtergraphs.
-- Extract media metadata and specs of a media stream (title, album, bit rate, codecs, FPS, etc).
-- Apply volume, balance and speed ratio to media playback.
-- MediaState actually works on this control. The standard WPF MediaElement is severely lacking in this area.
-- Ability to pick media streams contained in a file or a URL.
-- Specify input and codec parameters.
-- Opt-in hardware decoding acceleration via devices or via codecs.
-- Capture stream packets, audio, video and subtitle frames.
-- Change raw video, audio and subtitle data upon rendering.
-- Perform custom stream reading and stream recording.
-
-*... all in a single MediaElement control*
-
-FFME also supports opening capture devices. See example URLs below and [issue #48](https://github.com/unosquare/ffmediaelement/issues/48)
-```
-device://dshow/?audio=Microphone (Vengeance 2100):video=MS Webcam 4000
-device://gdigrab?title=Command Prompt
-device://gdigrab?desktop
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+            <Button Content="Play" Click="PlayClicked" />
+            <Button Content="Pause" Click="PauseClicked" />
+            <Button Content="Stop" Click="StopClicked" />
+        </StackPanel>
+    </Grid>
+</Window>
 ```
 
-If you'd like audio to not change pitch while changing the SpeedRatio property, you'll need the `SoundTouch.dll` library v2.1.1 available on the same directory as the FFmpeg binaries. You can get the [SoundTouch library here](https://www.surina.net/soundtouch/).
+Configure FFmpeg before opening media:
 
-### About how it works
+```csharp
+using System;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Unosquare.FFME;
+using Unosquare.FFME.Common;
 
-First off, let's review a few concepts. A `packet` is a group of bytes read from the input. All `packets` are of a specific `MediaType` (Audio, Video, Subtitle, Data), and contain some timing information and most importantly compressed data. Packets are sent to a `Codec` and in turn, the codec produces `Frames`. Please note that producing 1 `frame` does not always take exactly 1 `packet`. A `packet` may contain many `frames` but also a `frame` may require several `packets` for the decoder to build it. `Frames` will contain timing informattion and the raw, uncompressed data. Now, you may think you can use `frames` and show pixels on the screen or send samples to the sound card. We are close, but we still need to do some additional processing. Turns out different `Codecs` will produce different uncompressed data formats. For example, some video codecs will output pixel data in ARGB, some others in RGB, and some other in YUV420. Therefore, we will need to `Convert` these `frames` into something all hardware can use natively. I call these converted frames, `MediaBlocks`. These `MediaBlocks` will contain uncompressed data in standard Audio and Video formats that all hardware is able to receive.
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
 
-The process described above is implemented in 3 different layers:
-- The `MediaContainer` wraps an input stream. This layer keeps track of a `MediaComponentSet` which is nothing more than a collecttion of `MediaComponent` objects. Each `MediaComponent` holds `packet` **caching**, `frame` **decoding**, and `block` **conversion** logic. It provides the following important functionality:
-  - We call `Open` to open the input stream and detect the different stream components. This also determines the codecs to use.
-  - We call `Read` to read the next available packet and store it in its corresponding component (audio, video, subtitle, data, etc)
-  - We call `Decode` to read the following packet from the queue that each of the components hold, and return a set of frames.
-  - Finally, we call `Convert` to turn a given `frame` into a `MediaBlock`.
-- The `MediaEngine` wraps a `MediaContainer` and it is responsible for executing commands to control the input stream (Play, Pause, Stop, Seek, etc.) while keeping keeping 3 background workers.
-  - The `PacketReadingWroker` is designed to continuously read packets from the `MediaContainer`. It will read packets when it needs them and it will pause if it does not need them. This is determined by how much data is in the cache. It will try to keep approximately 1 second of media packets at all times.
-  - The `FrameDecodingWroker` gets the packets that the `PacketReadingWorker` writes and decodes them into frames. It then converts those frames into `blocks` and writes them to a `MediaBlockBuffer`. This block buffer can then be read by something else (the following worker described here) so its contents can be rendered.
-  - Finally, the `BlockRenderingWorker` reads blocks form the `MediaBlockBuffer`s and sends those blocks to a plat-from specific `IMediaRenderer`.
-- At the highest level, we have a `MediaElement`. It wraps a `MediaEngine` and it contains platform-specific implementation of methods to perform stuff like audio rendering, video rendering, subtitle rendering, and property synchronization between the `MediaEngine` and itself.
+        Library.FFmpegDirectory = @"C:\ffmpeg\win-x64";
+        Media.LoadedBehavior = MediaPlaybackState.Play;
+        Media.MediaFailed += (_, eventArgs) =>
+            Console.Error.WriteLine(eventArgs.ErrorException);
+    }
 
-A high-level diagram is provided as additional reference below.
-![arch-michelob-2.0](https://github.com/unosquare/ffmediaelement/raw/master/Support/arch-michelob-2.0.png)
+    public async void OpenMedia(string path) =>
+        await Media.Open(new Uri(path));
 
-### Some Work In Progress
-*Your help is welcome!*
+    private async void PlayClicked(object? sender, RoutedEventArgs eventArgs) =>
+        await Media.Play();
 
-- I am planning the next version of this control, `Floyd`. See the **Issues** section.
+    private async void PauseClicked(object? sender, RoutedEventArgs eventArgs) =>
+        await Media.Pause();
 
-## Windows: Compiling, Running and Testing
+    private async void StopClicked(object? sender, RoutedEventArgs eventArgs) =>
+        await Media.Stop();
+}
+```
 
-*Please note that I am unable to distribute FFmpeg's binaries because I don't know if I am allowed to do so. Follow the instructions below to compile, run and test FFME.*
+`LoadedBehavior` defaults to `Play`. Set it to `Pause` when media should open
+without starting playback. `Library.LoadFFmpeg()` can be called during startup
+to validate the native installation early; otherwise FFmpeg loads when media is
+first opened.
 
-1. Clone this repository and make sure you have <a href="https://dotnet.microsoft.com/download/dotnet-core/3.1">.Net Core 3.1 or above</a> installed.
-2. Download the FFmpeg **shared** binaries for your target architecture: <a href="https://ffmpeg.org/download.html">FFmpeg Windows Downloads</a>.
-3. Extract the contents of the <code>zip</code> file you just downloaded and go to the <code>bin</code> folder that got extracted. You should see 3 <code>exe</code> files and multiple <code>dll</code> files. Select and copy all of them.
-4. Now paste all files from the prior step onto a well-known folder. Take note of the full path. (I used `c:\ffmpeg\`)
-5. Open the solution and set the <code>Unosquare.FFME.Windows.Sample</code> project as the startup project. You can do this by right clicking on the project and selecting <code>Set as startup project</code>. Please note that you will need Visual Studio 2019 with dotnet 5.0 SDK for your target architecture installed.
-6. Under the <code>Unosquare.FFME.Windows.Sample</code> project, find the file `App.xaml.cs` and under the constructor, locate the line <code>Library.FFmpegDirectory = @"c:\ffmpeg";</code> and replace the path so that it points to the folder where you extracted your FFmpeg binaries (dll files).
-7. Click on <code>Start</code> to run the project.
-8. You should see a sample media player. Click on the <code>Open</code> icon located at the bottom right and enter a URL or path to a media file.
-9. The file or URL should play immediately, and all the properties should display to the right of the media display by clicking on the <code>Info</code> icon.
-10. You can use the resulting compiled assemblies in your project without further dependencies. Look for ```ffme.win.dll```.
+The control renders video and subtitles only. It intentionally does not contain
+a built-in transport bar, file picker, or play button. Add those controls in the
+application and call `Play()`, `Pause()`, `Stop()`, and `Seek()` as shown above.
 
-### ffmeplay.exe Sample Application
+## Avalonia Properties and Events
 
-The source code for this project contains a very capable media player (`FFME.Windows.Sample`) covering most of the use cases for the `FFME` control. If you are just checking things out, here is a quick set of shortcut keys that `ffmeplay` accepts.
+The Avalonia control exposes styled properties for `Volume`, `Balance`,
+`IsMuted`, `SpeedRatio`, `Position`, `Stretch`, `LoadedBehavior`,
+`UnloadedBehavior`, and `LoopingBehavior`.
 
-| Shortcut Key | Function Description |
-| --- | --- |
-| G | Example of toggling subtitle color |
-| Left | Seek 1 frame to the left |
-| Right | Seek 1 frame to the right |
-| + / Volume Up | Increase Audio Volume |
-| - / Volume Down | Decrease Audio Volume |
-| M / Volume Mute | Mute Audio |
-| Up | Increase playback Speed |
-| Down | Decrease playback speed |
-| A | Cycle Through Audio Streams |
-| S | Cycle Through Subtitle Streams |
-| Q | Cycle Through Video Streams |
-| C | Cycle Through Closed Caption Channels |
-| R | Reset Changes |
-| Y / H | Contrast: Increase / Decrease |
-| U / J | Brightness: Increase / Decrease |
-| I / K | Saturation: Increase / Decrease |
-| E | Example of cycling through audio filters |
-| T | Capture Screenshot to `desktop/ffplay` folder |
-| W | Start/Stop recording packets (no transcoding) into a transport stream to `desktop/ffplay` folder. |
-| Double-click | Enter fullscreen |
-| Escape | Exit fullscreen |
-| Mouse Wheel Up / Down | Zoom: In / Out |
+Shared FFME state and events remain available under the `Unosquare.FFME` and
+`Unosquare.FFME.Common` namespaces, including:
 
-## Thanks
-*In no particular order*
+- `MediaState`, `ActualPosition`, `NaturalDuration`, and `MediaInfo`
+- `IsPlaying`, `IsPaused`, `IsSeekable`, and buffering/seeking state
+- `HasAudio`, `HasVideo`, `HasSubtitles`, and codec/stream information
+- `MediaOpened`, `MediaReady`, `MediaEnded`, `MediaClosed`, and `MediaFailed`
+- `MediaStateChanged`, `PositionChanged`, buffering, seeking, and logging events
 
-- To the <a href="http://ffmpeg.org/">FFmpeg team</a> for making the Swiss Army Knife of media. I encourage you to donate to them.
-- To the <a href="https://github.com/naudio/NAudio">NAudio</a> team for making the best audio library out there for .NET -- one day I will contribute some improvements I have noticed they need.
-- To Ruslan Balanukhin for his FFmpeg interop bindings generator tool: <a href="https://github.com/Ruslan-B/FFmpeg.AutoGen">FFmpeg.AutoGen</a>.
-- To Martin Bohme for his <a href="http://dranger.com/ffmpeg/">tutorial</a> on creating a video player with FFmpeg.
-- To Barry Mieny for his beautiful <a href="http://barrymieny.deviantart.com/art/isabi4-for-Windows-105473723">FFmpeg logo</a>
+Some FFME decoding and logging events run on worker threads. Dispatch UI work
+to Avalonia's `Dispatcher.UIThread` from those handlers.
 
-## Similar Projects
-- <a href="https://github.com/higankanshi/Meta.Vlc">Meta Vlc</a>
-- <a href="https://github.com/Microsoft/FFmpegInterop">Microsoft FFmpeg Interop</a>
-- <a href="https://github.com/Sascha-L/WPF-MediaKit">WPF-MediaKit</a>
-- <a href="https://libvlcnet.codeplex.com/">LibVLC.NET</a>
-- <a href="http://playerframework.codeplex.com/">Microsoft Player Framework</a>
+## Run the Avalonia Sample
 
-## License
-- Please refer to the <a href="https://github.com/unosquare/ffmediaelement/blob/master/LICENSE">LICENSE</a> file for more information.
+Download FFmpeg and run the sample player:
+
+```powershell
+.\Support\download-ffmpeg.ps1
+dotnet run --project .\Unosquare.FFME.Avalonia.Sample\Unosquare.FFME.Avalonia.Sample.csproj
+```
+
+Pass a local file or URL to open it at startup:
+
+```powershell
+dotnet run --project .\Unosquare.FFME.Avalonia.Sample\Unosquare.FFME.Avalonia.Sample.csproj -- "C:\media\video.mp4"
+```
+
+The sample searches for `external/ffmpegs/<runtime-identifier>` automatically
+and also allows the FFmpeg directory to be entered manually.
+
+## Build
+
+```powershell
+dotnet build .\Unosquare.FFME.sln --configuration Debug
+dotnet pack .\Unosquare.FFME.Avalonia\Unosquare.FFME.Avalonia.csproj --configuration Release
+```
+
+Pushes to `main` and `develop` produce package artifacts. Tags matching `v*`
+publish `FFMediaElement.Avalonia` to NuGet.org through trusted publishing.
+
+## Attribution and License
+
+This is a modified Avalonia port of
+[Unosquare FFME](https://github.com/unosquare/ffmediaelement), not an official
+Unosquare release. The FFME engine and shared `MediaElement` code remain subject
+to the upstream Microsoft Public License (Ms-PL).
+
+The Ms-PL permits using, modifying, creating derivative works from, and
+redistributing FFME, subject to its conditions. In particular, existing
+copyright and attribution notices must be retained, and source distributions
+must include the license. For that reason, the upstream license notices are
+intentionally retained in [LICENSE](LICENSE) and included in the NuGet package.
+
+FFmpeg, FFmpeg.AutoGen, PortAudio, Avalonia, and other dependencies remain under
+their respective licenses. See [LICENSE](LICENSE) and the dependency packages
+for the applicable notices. This section is a project description, not legal
+advice.
