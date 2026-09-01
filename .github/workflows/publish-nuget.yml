@@ -40,6 +40,12 @@ jobs:
       - name: List .NET SDKs
         run: dotnet --info
 
+      - name: Download FFmpeg runtimes
+        shell: pwsh
+        run: |
+          ./Support/download-ffmpeg.ps1 `
+            -Rids @('win-x64', 'win-arm64', 'linux-x64')
+
       - name: Resolve package version
         id: version
         shell: pwsh
@@ -58,31 +64,63 @@ jobs:
           "value=$version" >> $env:GITHUB_OUTPUT
 
       - name: Restore
-        run: dotnet restore Unosquare.FFME.Avalonia/Unosquare.FFME.Avalonia.csproj
+        shell: pwsh
+        run: |
+          $projects = @(
+            'Unosquare.FFME.Avalonia/Unosquare.FFME.Avalonia.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.win-x64/FFMediaElement.Avalonia.FFmpeg.win-x64.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.win-arm64/FFMediaElement.Avalonia.FFmpeg.win-arm64.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.linux-x64/FFMediaElement.Avalonia.FFmpeg.linux-x64.csproj'
+          )
+
+          foreach ($project in $projects) {
+            dotnet restore $project
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Build
         shell: pwsh
         run: |
-          dotnet build Unosquare.FFME.Avalonia/Unosquare.FFME.Avalonia.csproj `
-            --configuration Release `
-            --no-restore `
-            -p:Version='${{ steps.version.outputs.value }}' `
-            -p:ContinuousIntegrationBuild=true
+          $projects = @(
+            'Unosquare.FFME.Avalonia/Unosquare.FFME.Avalonia.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.win-x64/FFMediaElement.Avalonia.FFmpeg.win-x64.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.win-arm64/FFMediaElement.Avalonia.FFmpeg.win-arm64.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.linux-x64/FFMediaElement.Avalonia.FFmpeg.linux-x64.csproj'
+          )
+
+          foreach ($project in $projects) {
+            dotnet build $project `
+              --configuration Release `
+              --no-restore `
+              -p:Version='${{ steps.version.outputs.value }}' `
+              -p:ContinuousIntegrationBuild=true
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Pack
         shell: pwsh
         run: |
-          dotnet pack Unosquare.FFME.Avalonia/Unosquare.FFME.Avalonia.csproj `
-            --configuration Release `
-            --no-build `
-            --no-restore `
-            --output Publish `
-            -p:PackageVersion='${{ steps.version.outputs.value }}' `
-            -p:RepositoryBranch='${{ github.ref_name }}' `
-            -p:RepositoryCommit='${{ github.sha }}' `
-            -p:ContinuousIntegrationBuild=true
+          $projects = @(
+            'Unosquare.FFME.Avalonia/Unosquare.FFME.Avalonia.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.win-x64/FFMediaElement.Avalonia.FFmpeg.win-x64.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.win-arm64/FFMediaElement.Avalonia.FFmpeg.win-arm64.csproj'
+            'FFMediaElement.Avalonia.FFmpeg.linux-x64/FFMediaElement.Avalonia.FFmpeg.linux-x64.csproj'
+          )
 
-      - name: Upload Avalonia package
+          foreach ($project in $projects) {
+            dotnet pack $project `
+              --configuration Release `
+              --no-build `
+              --no-restore `
+              --output Publish `
+              -p:PackageVersion='${{ steps.version.outputs.value }}' `
+              -p:RepositoryBranch='${{ github.ref_name }}' `
+              -p:RepositoryCommit='${{ github.sha }}' `
+              -p:ContinuousIntegrationBuild=true
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
         with:
           name: FFMediaElement.Avalonia-${{ github.sha }}
@@ -96,18 +134,30 @@ jobs:
         with:
           user: lijiaolong
 
-      - name: Publish Avalonia package to NuGet
+      - name: Publish packages to NuGet
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         shell: pwsh
         run: |
-          $packages = @(Get-ChildItem 'Publish/FFMediaElement.Avalonia.*.nupkg' -File)
-          if ($packages.Count -ne 1) {
-            throw "Expected exactly one Avalonia package, but found $($packages.Count)."
+          $packageIds = @(
+            'FFMediaElement.Avalonia'
+            'FFMediaElement.Avalonia.FFmpeg.win-x64'
+            'FFMediaElement.Avalonia.FFmpeg.win-arm64'
+            'FFMediaElement.Avalonia.FFmpeg.linux-x64'
+          )
+          $packages = @(Get-ChildItem 'Publish/*.nupkg' -File)
+          if ($packages.Count -ne $packageIds.Count) {
+            throw "Expected $($packageIds.Count) packages, but found $($packages.Count)."
           }
 
-          $packages | ForEach-Object {
-            dotnet nuget push $_.FullName `
+          foreach ($packageId in $packageIds) {
+            $packagePath = "Publish/$packageId.${{ steps.version.outputs.value }}.nupkg"
+            if (-not (Test-Path $packagePath)) {
+              throw "Expected package was not created: $packagePath"
+            }
+
+            dotnet nuget push $packagePath `
               --api-key '${{ steps.nuget-login.outputs.NUGET_API_KEY }}' `
               --source 'https://api.nuget.org/v3/index.json' `
               --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>FFMediaElement.Avalonia.FFmpeg.win-arm64</PackageId>
+    <Version>0.1.0-beta.1</Version>
+    <Authors>LIJIAOLONG96 and FFmpeg contributors</Authors>
+    <Title>FFmpeg native runtime for FFMediaElement.Avalonia (win-arm64)</Title>
+    <Description>FFmpeg 7 shared LGPL native libraries for FFMediaElement.Avalonia on Windows ARM64.</Description>
+    <PackageTags>avalonia ffmpeg mediaelement native runtime win-arm64</PackageTags>
+    <PackageProjectUrl>https://github.com/LIJIAOLONG96/ffmediaelement.Avalonia</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/LIJIAOLONG96/ffmediaelement.Avalonia.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\external\ffmpegs\win-arm64\*.dll"
+          Pack="true"
+          PackagePath="runtimes/win-arm64/native" />
+    <None Include="..\external\ffmpegs\win-arm64\FFMPEG-LICENSE.txt"
+          Pack="true"
+          PackagePath="licenses" />
+    <None Include="..\external\ffmpegs\win-arm64\VERSION.txt"
+          Pack="true"
+          PackagePath="" />
+  </ItemGroup>
+
+  <Target Name="ValidateFFmpegFiles" BeforeTargets="Pack">
+    <Error Condition="!Exists('..\external\ffmpegs\win-arm64\avcodec-61.dll')"
+           Text="FFmpeg win-arm64 files are missing. Run Support\download-ffmpeg.ps1 first." />
+  </Target>
+</Project>

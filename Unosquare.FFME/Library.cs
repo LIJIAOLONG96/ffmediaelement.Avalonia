@@ -6,8 +6,10 @@ using FFmpeg.AutoGen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -16,7 +18,8 @@ using System.Threading.Tasks;
 public static partial class Library
 {
     private static readonly string NotInitializedErrorMessage =
-        $"{nameof(FFmpeg)} library not initialized. Set the {nameof(FFmpegDirectory)} and call {nameof(LoadFFmpeg)}";
+        $"{nameof(FFmpeg)} library not initialized. Install a compatible native runtime package or set " +
+        $"the {nameof(FFmpegDirectory)}, then call {nameof(LoadFFmpeg)}";
 
     private static readonly object SyncLock = new();
     private static IReadOnlyList<string> m_InputFormatNames;
@@ -28,11 +31,14 @@ public static partial class Library
     private static IReadOnlyDictionary<string, IReadOnlyList<OptionMetadata>> m_DecoderOptions;
     private static unsafe AVCodec*[] m_AllCodecs;
     private static int m_FFmpegLogLevel = Debugger.IsAttached ? ffmpeg.AV_LOG_VERBOSE : ffmpeg.AV_LOG_WARNING;
+    private static bool m_IsFFmpegDirectorySet;
     private static bool m_IsInitialized;
 
     /// <summary>
     /// Gets or sets the FFmpeg path from which to load the FFmpeg binaries.
-    /// You must set this path before setting the Source property for the first time on any instance of this control.
+    /// When not set, the application directory and the NuGet native directory
+    /// for the current runtime are searched automatically.
+    /// Set this path before setting the Source property for the first time on any instance of this control.
     /// Setting this property when FFmpeg binaries have been registered will have no effect.
     /// </summary>
     public static string FFmpegDirectory
@@ -44,6 +50,7 @@ public static partial class Library
                 return;
 
             ffmpeg.RootPath = value;
+            m_IsFFmpegDirectorySet = !string.IsNullOrWhiteSpace(value);
         }
     }
 
@@ -266,6 +273,7 @@ public static partial class Library
 
             if (!m_IsInitialized)
             {
+                ResolveFFmpegDirectory();
                 DynamicallyLoadedBindings.ThrowErrorIfFunctionNotFound = true;
                 DynamicallyLoadedBindings.Initialize();
                 try
@@ -370,4 +378,64 @@ public static partial class Library
     /// The seek index object.
     /// </returns>
     public static VideoSeekIndex CreateVideoSeekIndex(string mediaSource) => CreateVideoSeekIndex(mediaSource, -1);
+
+    private static void ResolveFFmpegDirectory()
+    {
+        if (m_IsFFmpegDirectorySet)
+            return;
+
+        var runtimeIdentifier = GetCurrentRuntimeIdentifier();
+        var candidates = new[]
+        {
+            AppContext.BaseDirectory,
+            runtimeIdentifier is null
+                ? null
+                : Path.Combine(AppContext.BaseDirectory, "runtimes", runtimeIdentifier, "native"),
+        };
+
+        var detectedDirectory = candidates.FirstOrDefault(ContainsFFmpegLibraries);
+        if (detectedDirectory is not null)
+            ffmpeg.RootPath = detectedDirectory;
+    }
+
+    private static string GetCurrentRuntimeIdentifier()
+    {
+        var platform = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "win"
+            : RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                ? "linux"
+                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                    ? "osx"
+                    : null;
+
+        var architecture = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "x64",
+            Architecture.Arm64 => "arm64",
+            Architecture.X86 => "x86",
+            Architecture.Arm => "arm",
+            _ => null,
+        };
+
+        return platform is null || architecture is null
+            ? null
+            : $"{platform}-{architecture}";
+    }
+
+    private static bool ContainsFFmpegLibraries(string directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+            return false;
+
+        var searchPattern = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "avcodec-*.dll"
+            : RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                ? "libavcodec.so.*"
+                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                    ? "libavcodec.*.dylib"
+                    : null;
+
+        return searchPattern is not null &&
+            Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly).Any();
+    }
 }

@@ -1,5 +1,6 @@
 param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\external\ffmpegs")
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\external\ffmpegs"),
+    [string[]]$Rids
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,6 +29,15 @@ $assets = @(
         Sha256 = "28d2c354ad6cc360db0e932598f1cf5845887a1adc46415ded91baf1ca82a53b"
     }
 )
+
+if ($Rids.Count -gt 0) {
+    $unknownRids = @($Rids | Where-Object { $_ -notin $assets.Rid })
+    if ($unknownRids.Count -gt 0) {
+        throw "Unknown runtime identifier(s): $($unknownRids -join ', ')."
+    }
+
+    $assets = @($assets | Where-Object { $_.Rid -in $Rids })
+}
 
 $downloadDirectory = Join-Path $OutputDirectory ".downloads"
 New-Item -ItemType Directory -Path $downloadDirectory -Force | Out-Null
