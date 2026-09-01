@@ -146,19 +146,23 @@ namespace Unosquare.FFME.Rendering
                 Parent?.SetVideoBitmap(TargetBitmap);
             }
 
-            using var framebuffer = TargetBitmap.Lock();
-            fixed (byte* source = pixels)
+            using (var framebuffer = TargetBitmap.Lock())
             {
-                var rowLength = Math.Min(sourceStride, framebuffer.RowBytes);
-                for (var row = 0; row < height; row++)
+                fixed (byte* source = pixels)
                 {
-                    Buffer.MemoryCopy(
-                        source + (row * sourceStride),
-                        (byte*)framebuffer.Address + (row * framebuffer.RowBytes),
-                        framebuffer.RowBytes,
-                        rowLength);
+                    var rowLength = Math.Min(sourceStride, framebuffer.RowBytes);
+                    for (var row = 0; row < height; row++)
+                    {
+                        Buffer.MemoryCopy(
+                            source + (row * sourceStride),
+                            (byte*)framebuffer.Address + (row * framebuffer.RowBytes),
+                            framebuffer.RowBytes,
+                            rowLength);
+                    }
                 }
             }
+
+            Parent?.InvalidateVideo();
         }
 
         private sealed class PendingFrame

@@ -141,6 +141,8 @@ namespace Unosquare.FFME
 
         internal void SetVideoBitmap(WriteableBitmap bitmap) => VideoView.Source = bitmap;
 
+        internal void InvalidateVideo() => VideoView.InvalidateVisual();
+
         internal void SetSubtitleText(string text) => SubtitleView.Text = text ?? string.Empty;
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
